@@ -225,46 +225,52 @@ app.get('/api/properties/:id', async (req, res) => {
   }
 })
 
-// POST new property
+// POST new property (updated with purpose)
 app.post('/api/properties', verifyToken, verifyRole(['admin', 'superadmin']), async (req, res) => {
   try {
-    const { title, price, location, description, contact_number, bhk, type } = req.body
-    
-    // Validation
-    if (!title || !price || !location || !description || !contact_number) {
-      return res.status(400).json({ error: 'All fields are required' })
-    }
+    const { 
+      title, price, location, description, image_url, 
+      contact_number, bhk, type, purpose, rent_price, rent_period 
+    } = req.body
     
     const result = await pool.query(
-      'INSERT INTO properties (title, price, location, description, contact_number, bhk, type) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [title, price, location, description, contact_number, bhk, type]
+      `INSERT INTO properties 
+       (title, price, location, description, image_url, contact_number, bhk, type, purpose, rent_price, rent_period) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+       RETURNING *`,
+      [title, price, location, description, image_url, contact_number, bhk, type, purpose, rent_price, rent_period]
     )
-    
     res.status(201).json(result.rows[0])
   } catch (err) {
-    console.error('Create property error:', err.message)
-    res.status(500).json({ error: 'Failed to create property' })
+    console.log(err.message)
+    res.status(500).json({ error: err.message })
   }
 })
 
-// PUT update property
+// PUT update property (updated with purpose)
 app.put('/api/properties/:id', verifyToken, verifyRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const { id } = req.params
-    const { title, price, location, description, contact_number, bhk, type } = req.body
+    const { 
+      title, price, location, description, image_url, 
+      contact_number, bhk, type, purpose, rent_price, rent_period 
+    } = req.body
     
     const result = await pool.query(
-      'UPDATE properties SET title=$1, price=$2, location=$3, description=$4, contact_number=$5, bhk=$6, type=$7 WHERE id=$8 RETURNING *',
-      [title, price, location, description, contact_number, bhk, type, id]
+      `UPDATE properties 
+       SET title=$1, price=$2, location=$3, description=$4, image_url=$5, 
+           contact_number=$6, bhk=$7, type=$8, purpose=$9, rent_price=$10, rent_period=$11 
+       WHERE id=$12 
+       RETURNING *`,
+      [title, price, location, description, image_url, contact_number, bhk, type, purpose, rent_price, rent_period, id]
     )
-    
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Property not found' })
     }
     res.json(result.rows[0])
   } catch (err) {
-    console.error('Update property error:', err.message)
-    res.status(500).json({ error: 'Failed to update property' })
+    console.log(err.message)
+    res.status(500).json({ error: err.message })
   }
 })
 
